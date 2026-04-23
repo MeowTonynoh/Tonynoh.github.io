@@ -562,6 +562,76 @@
             .bio-links-grid { grid-template-columns: 1fr; }
             .bio-staff-grid { grid-template-columns: 1fr; }
         }
+        .network-card {
+            height: auto !important;
+            cursor: default !important;
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            text-align: left !important;
+            padding: 1.2rem 1.5rem !important;
+        }
+
+        .network-arrow {
+            font-size: 1.2rem;
+            color: var(--text-tertiary);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+
+        .network-card:hover .network-arrow {
+            transform: rotate(180deg);
+            color: var(--text-primary);
+        }
+
+        .tier-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #111;
+            border: 1px solid var(--border-secondary);
+            border-radius: 10px;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            z-index: 50;
+        }
+
+        .network-card:hover ~ .tier-dropdown,
+        .network-card:hover .tier-dropdown {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateY(0);
+        }
+
+        /* keep dropdown visible when hovering it */
+        div:has(.network-card:hover) .tier-dropdown,
+        div:has(.tier-dropdown:hover) .tier-dropdown {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateY(0);
+        }
+
+        .tier-dropdown-item {
+            display: block;
+            padding: 10px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .tier-dropdown-item:last-child { border-bottom: none; }
+
+        .tier-dropdown-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
     </style>
 </head>
 
@@ -635,9 +705,9 @@
                         <div class="bio-tab"><strong>Language:</strong> Italian</div>
                     </div>
 
-                    <!-- CURRENTLY section -->
+                    <!-- Current Staff section -->
                     <div class="bio-staff-section">
-                        <h3 class="bio-staff-title"><i class="fa-solid fa-user-clock"></i> CURRENTLY</h3>
+                        <h3 class="bio-staff-title"><i class="fa-solid fa-user-clock"></i> CURRENT STAFF</h3>
                         <div class="staff-grid" id="currentlyGrid"></div>
                     </div>
 
@@ -692,8 +762,20 @@
                 }
             ],
             currently: [
-                // Aggiungi qui i server/progetti attuali, es:
-                // { serverName: "NomeServer", role: "RUOLO", color: "#ffffff", imgurLink: "https://..." }
+                {
+                    serverName: "PVP Tiers Network",
+                    role: "PVP TIERIST",
+                    color: "#ffffff",
+                    tiers: [
+                        { name: "UHC Tierlist", link: "https://discord.gg/wh54JQ9k" },
+                        { name: "Axe Tierlist", link: "https://discord.gg/xy2GdVESCj" },
+                        { name: "Crystal Tierlist", link: "https://discord.gg/2Ra6FqTp7" },
+                        { name: "Potion Tierlist", link: "https://discord.gg/SWTXgtvZQh" },
+                        { name: "Sword Tierlist", link: "https://discord.gg/tiers" },
+                        { name: "SMP Tierlist", link: "https://discord.gg/sbtuPJzcxW" },
+                        { name: "Nethpot Tierlist", link: "https://discord.gg/cJshFSxey4" }
+                    ]
+                }
             ],
             staffExperience: [
                 // Verranno aggiunti quando mandi i link Imgur
@@ -741,11 +823,47 @@
 
         function initCurrently() {
             const grid = document.getElementById('currentlyGrid');
+            grid.style.gridTemplateColumns = '1fr';
+
             if (CONFIG.currently.length === 0) {
-                grid.innerHTML = '<p style="color:var(--text-tertiary);font-size:13px;text-align:center;grid-column:1/-1;">nothing at the moment 🎧</p>';
-            } else {
-                CONFIG.currently.forEach(item => createCard(grid, item, item.imgurLink));
+                grid.innerHTML = '<p style="color:var(--text-tertiary);font-size:13px;text-align:center;">nothing at the moment 🎧</p>';
+                return;
             }
+
+            CONFIG.currently.forEach(item => {
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'position:relative;';
+
+                let tiersHtml = '';
+                if (item.tiers && item.tiers.length) {
+                    tiersHtml = `
+                    <div class="tier-dropdown">
+                        ${item.tiers.map(t => `
+                            <a href="${t.link}" target="_blank" class="tier-dropdown-item">
+                                <span style="color:var(--text-tertiary);margin-right:8px;">→</span>${t.name}
+                            </a>`).join('')}
+                    </div>`;
+                }
+
+                wrapper.innerHTML = `
+                    <div class="server-card network-card">
+                        <div class="server-info">
+                            <h4><i class="fa-solid fa-shield-halved" style="margin-right:8px;font-size:0.9rem;"></i>${item.serverName}</h4>
+                            <div class="server-role">${item.role}</div>
+                        </div>
+                        <span class="network-arrow">▾</span>
+                        ${tiersHtml}
+                    </div>`;
+
+                if (item.color) {
+                    const roleEl = wrapper.querySelector('.server-role');
+                    roleEl.style.background = hexToRgba(item.color, 0.1);
+                    roleEl.style.borderColor = hexToRgba(item.color, 0.2);
+                    roleEl.style.color = item.color;
+                }
+
+                grid.appendChild(wrapper);
+            });
         }
 
         function initStaffExperience() {
